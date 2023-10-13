@@ -1,14 +1,63 @@
-<!doctype html>
-<html lang="fr">
+<!DOCTYPE html>
+<html>
 <head>
-  <meta charset="utf-8">
-  <title>Titre de la page</title>
-  <link rel="stylesheet" href="style.css">
-  <script src="script.js"></script>
+    <title>Pixel War</title>
 </head>
 <body>
-  ...
-  <!-- Le reste du contenu -->
-  ...
+    <canvas id="pixel-canvas" width="500" height="500"></canvas>
+    <script>
+        var canvas = document.getElementById("pixel-canvas");
+        var context = canvas.getContext("2d");
+
+        function initialiserToileDepuisCookies() {
+            var cookies = document.cookie.split(";");
+            for (var i = 0; i < cookies.length; i++) {
+                var cookie = cookies[i].trim();
+                if (cookie.indexOf("toile=") === 0) {
+                    var data = cookie.substring(6);
+                    var lignes = data.split(";");
+                    for (var j = 0; j < lignes.length; j++) {
+                        var ligne = lignes[j].split(",");
+                        for (var k = 0; k < ligne.length; k++) {
+                            var couleur = ligne[k];
+                            context.fillStyle = couleur;
+                            context.fillRect(k * 10, j * 10, 10, 10);
+                        }
+                    }
+                }
+            }
+        }
+
+        canvas.addEventListener("click", function(event) {
+        var x = Math.floor(event.offsetX / 10);
+        var y = Math.floor(event.offsetY / 10);
+        var couleur = prompt("Entrez la couleur (par exemple, \"red\"):");
+
+        if (couleur !== null) {  // L'utilisateur n'a pas annulé la saisie
+            if (/^#[0-9A-Fa-f]{6}$/.test(couleur) || /^(red|green|blue|white|black|yellow)$/.test(couleur)) {
+                context.fillStyle = couleur;
+                context.fillRect(x * 10, y * 10, 10, 10);
+                sauvegarderToileDansCookies();
+            } else {
+                alert("Couleur invalide. Veuillez saisir une couleur valide.");
+            }
+        }
+    });
+
+        function sauvegarderToileDansCookies() {
+            var lignes = [];
+            for (var j = 0; j < 50; j++) {
+                var ligne = [];
+                for (var k = 0; k < 50; k++) {
+                    var couleur = context.getImageData(k * 10, j * 10, 1, 1).data;
+                    ligne.push(couleur);
+                }
+                lignes.push(ligne.join(","));
+            }
+            document.cookie = "toile=" + lignes.join(";");
+        }
+
+        initialiserToileDepuisCookies();
+    </script>
 </body>
 </html>
