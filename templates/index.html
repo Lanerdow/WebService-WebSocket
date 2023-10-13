@@ -24,7 +24,7 @@
     <input type="color" id="colorPicker" value="#000000">
     <canvas id="pixelCanvas" width="1000" height="700"></canvas>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.2.0/socket.io.js"></script>
 
     <script>
         var canvas = document.getElementById('pixelCanvas');
@@ -35,6 +35,14 @@
         socket.on('connect', function() {
             console.log('Connected to server');
         });
+
+        // Dessiner les pixels stockés depuis la base de données
+        var pixels = {{ pixels|tojson }};
+        for (var i = 0; i < pixels.length; i++) {
+            var pixel = pixels[i];
+            context.fillStyle = pixel.color;
+            context.fillRect(pixel.x, pixel.y, 10, 10);
+        }
 
         socket.on('draw', function(data) {
             context.fillStyle = data.color;
