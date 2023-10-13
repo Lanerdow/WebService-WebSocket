@@ -1,63 +1,56 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Pixel War</title>
+    <title>Canvas Pixel Art</title>
+    <style>
+        body {
+            background-color: #f0f0f0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h1 {
+            margin-top: 20px;
+        }
+
+        #pixelCanvas {
+            border: 2px solid #000;
+        }
+    </style>
 </head>
 <body>
-    <canvas id="pixel-canvas" width="500" height="500"></canvas>
+    <h1>Pixel Art Canvas</h1>
+    <input type="color" id="colorPicker" value="#000000">
+    <canvas id="pixelCanvas" width="1000" height="700"></canvas>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+
     <script>
-        var canvas = document.getElementById("pixel-canvas");
-        var context = canvas.getContext("2d");
+        var canvas = document.getElementById('pixelCanvas');
+        var context = canvas.getContext('2d');
+        var colorPicker = document.getElementById('colorPicker');
+        var socket = io.connect('http://' + document.domain + ':' + location.port);
 
-        function initialiserToileDepuisCookies() {
-            var cookies = document.cookie.split(";");
-            for (var i = 0; i < cookies.length; i++) {
-                var cookie = cookies[i].trim();
-                if (cookie.indexOf("toile=") === 0) {
-                    var data = cookie.substring(6);
-                    var lignes = data.split(";");
-                    for (var j = 0; j < lignes.length; j++) {
-                        var ligne = lignes[j].split(",");
-                        for (var k = 0; k < ligne.length; k++) {
-                            var couleur = ligne[k];
-                            context.fillStyle = couleur;
-                            context.fillRect(k * 10, j * 10, 10, 10);
-                        }
-                    }
-                }
-            }
-        }
+        socket.on('connect', function() {
+            console.log('Connected to server');
+        });
 
-        canvas.addEventListener("click", function(event) {
-        var x = Math.floor(event.offsetX / 10);
-        var y = Math.floor(event.offsetY / 10);
-        var couleur = prompt("Entrez la couleur (par exemple, \"red\"):");
+        socket.on('draw', function(data) {
+            context.fillStyle = data.color;
+            context.fillRect(data.x, data.y, 10, 10);
+        });
 
-        if (couleur !== null) {  // L'utilisateur n'a pas annulé la saisie
-            if (/^#[0-9A-Fa-f]{6}$/.test(couleur) || /^(red|green|blue|white|black|yellow)$/.test(couleur)) {
-                context.fillStyle = couleur;
-                context.fillRect(x * 10, y * 10, 10, 10);
-                sauvegarderToileDansCookies();
-            } else {
-                alert("Couleur invalide. Veuillez saisir une couleur valide.");
-            }
-        }
-    });
+        canvas.addEventListener('click', function(event) {
+            var x = event.clientX - canvas.getBoundingClientRect().left;
+            var y = event.clientY - canvas.getBoundingClientRect().top;
+            var color = colorPicker.value;
 
-        function sauvegarderToileDansCookies() {
-            var lignes = [];
-            for (var j = 0; j < 50; j++) {
-                var ligne = [];
-                for (var k = 0; k < 50; k++) {
-                    var couleur = context.getImageData(k * 10, j * 10, 1, 1).data;
-                    ligne.push(couleur);
-                }
-                lignes.push(ligne.join(","));
-            }
-            document.cookie = "toile=" + lignes.join(";");
-        }
+            context.fillStyle = color;
+            context.fillRect(Math.floor(x / 10) * 10, Math.floor(y / 10) * 10, 10, 10);
 
-        initialiserToileDepuisCookies();
+            socket.emit('draw', {'x': Math.floor(x / 10) * 10, 'y': Math.floor(y / 10) * 10, 'color': color});
+        });
     </script>
 </body>
 </html>

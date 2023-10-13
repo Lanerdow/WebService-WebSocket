@@ -1,34 +1,18 @@
-from flask import Flask, render_template, request, jsonify, make_response
+from flask import Flask, render_template
+from flask_socketio import SocketIO
 
 app = Flask(__name__)
+app.config['SECRET_KEY'] = 'your_secret_key'
+socketio = SocketIO(app)
 
-# Dimensions de la toile
-toile_largeur, toile_hauteur = 50, 50
-
-def lire_toile_a_partir_des_cookies():
-    toile = request.cookies.get("toile")
-    if toile:
-        return [list(map(str, ligne.split(","))) for ligne in toile.split(";")]
-    else:
-        return [["white" for _ in range(toile_largeur)] for _ in range(toile_hauteur)]
-
-@app.route("/")
+@app.route('/')
 def index():
-    toile = lire_toile_a_partir_des_cookies()
-    return render_template("index.html", toile=toile)
+    return render_template('index.html')
 
-@app.route("/mettre_pixel", methods=["POST"])
-def mettre_pixel():
-    x = int(request.form["x"])
-    y = int(request.form["y"])
-    couleur = request.form["couleur"]
+@socketio.on('draw')
+def handle_draw(data):
+    x, y, color = data['x'], data['y'], data['color']
+    socketio.emit('draw', {'x': x, 'y': y, 'color': color})
 
-    toile = lire_toile_a_partir_des_cookies()
-    toile[y][x] = couleur
-
-    response = make_response(jsonify({"status": "success"}))
-    response.set_cookie("toile", ";".join([",".join(ligne) for ligne in toile]))
-    return response
-
-if __name__ == "__main__":
-    app.run(debug=True)
+if __name__ == '__main__':
+    socketio.run(app, debug=True, allow_unsafe_werkzeug=True)
